@@ -67,13 +67,14 @@ controller:
       privileged: false
   replicaCount: 1
   hostNetwork: false
+  dnsPolicy: ClusterFirst
   hostAliases: []
   hostIPC: false
   annotations: {}
   labels: {}
   podAnnotations: {}
   podLabels: {}
-  priorityClassName: ""
+  priorityClassName: "system-cluster-critical"
 
   # deployment = deploy controller parts in a distinct deployment
   # node       = deploy controller as sidecars with node daemonset
@@ -82,7 +83,9 @@ controller:
   # https://kubernetes-csi.github.io/docs/external-attacher.html
   externalAttacher:
     enabled: true
-    image: registry.k8s.io/sig-storage/csi-attacher:v4.4.0
+    image:
+      registry: registry.k8s.io/sig-storage/csi-attacher
+      tag: v4.4.0
     args:
       - --v=5
       - --leader-election
@@ -97,7 +100,9 @@ controller:
   # https://kubernetes-csi.github.io/docs/external-provisioner.html
   externalProvisioner:
     enabled: true
-    image: registry.k8s.io/sig-storage/csi-provisioner:v3.6.0
+    image:
+      registry: registry.k8s.io/sig-storage/csi-provisioner
+      tag: v3.6.0
     args:
       - --v=5
       - --leader-election
@@ -113,7 +118,9 @@ controller:
   # https://kubernetes-csi.github.io/docs/external-resizer.html
   externalResizer:
     enabled: true
-    image: registry.k8s.io/sig-storage/csi-resizer:v1.9.0
+    image:
+      registry: registry.k8s.io/sig-storage/csi-resizer
+      tag: v1.9.0
     args:
       - --v=5
       - --leader-election
@@ -130,7 +137,9 @@ controller:
     enabled: true
     # 1.20+ should use v4.0.0+
     # READ *before* updating from beta https://github.com/kubernetes-csi/external-snapshotter#usage
-    image: registry.k8s.io/sig-storage/csi-snapshotter:v6.3.0
+    image:
+      registry: registry.k8s.io/sig-storage/csi-snapshotter
+      tag: v8.2.1
     args:
       - --v=5
       - --leader-election
@@ -145,7 +154,9 @@ controller:
   # https://github.com/kubernetes-csi/external-health-monitor
   externalHealthMonitorController:
     enabled: false
-    image: registry.k8s.io/sig-storage/csi-external-health-monitor-controller:v0.11.0
+    image:
+      registry: registry.k8s.io/sig-storage/csi-external-health-monitor-controller
+      tag: v0.14.0
     args:
       - --v=5
       - --leader-election
@@ -170,8 +181,10 @@ controller:
   # democratic-csi controller
   driver:
     enabled: true
-    image: docker.io/democraticcsi/democratic-csi:latest
-    # imagePullPolicy: Always
+    image:
+      registry: docker.io/democraticcsi/democratic-csi
+      tag: latest
+      # pullPolicy: Always
     logLevel: info
     lifecycle:
     #      postStart:
@@ -219,6 +232,7 @@ node:
       privileged: false
   enabled: true
   hostNetwork: true
+  dnsPolicy: ClusterFirstWithHostNet
   hostAliases: []
   hostIPC: true
   hostPID: false
@@ -227,20 +241,24 @@ node:
   labels: {}
   podAnnotations: {}
   podLabels: {}
-  priorityClassName: ""
+  priorityClassName: "system-node-critical"
 
   livenessProbe:
     enabled: true
 
   cleanup:
-    image: docker.io/busybox:1.32.0
+    image:
+      registry: docker.io/busybox
+      tag: 1.37.0
     resources:
 
   # democratic-csi node
   driver:
     enabled: true
-    image: docker.io/democraticcsi/democratic-csi:latest
-    # imagePullPolicy: Always
+    image:
+      registry: docker.io/democraticcsi/democratic-csi
+      tag: latest
+      # pullPolicy: Always
     logLevel: info
     # set path to null if your OS has no localtime file
     # RancherOS, openshift, etc
@@ -261,10 +279,16 @@ node:
 
     iscsiDirHostPath: /etc/iscsi
     iscsiDirHostPathType: Directory
+
+    nvmeDirMountEnabled: false
+    nvmeDirHostPath: /etc/nvme
+    nvmeDirHostPathType: Directory
   # https://kubernetes-csi.github.io/docs/node-driver-registrar.html
   driverRegistrar:
     enabled: true
-    image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.0
+    image:
+      registry: registry.k8s.io/sig-storage/csi-node-driver-registrar
+      tag: v2.9.0
     args:
       - --v=5
       - --csi-address={{ .csiSocketAddress }}
@@ -333,7 +357,9 @@ volumeSnapshotClasses: []
 # https://github.com/democratic-csi/csi-grpc-proxy
 csiProxy:
   enabled: true
-  image: docker.io/democraticcsi/csi-grpc-proxy:v0.5.6
+  image:
+    registry: docker.io/democraticcsi/csi-grpc-proxy
+    tag: v0.5.6
   resources:
 
 # Configure a pod security policy to allow privileged pods

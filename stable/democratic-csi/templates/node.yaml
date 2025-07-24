@@ -3,6 +3,7 @@
 {{- $controllerStrategy := "node" -}}
 {{- $_ := set $root "csiSocketAddress" "/csi-data/csi.sock" -}}
 {{- $mountIscsi := include "democratic-csi.mount-iscsi" . | eq "true" }}
+{{- $mountNvme := .Values.node.driver.nvmeDirMountEnabled }}
 ---
 kind: DaemonSet
 apiVersion: apps/v1
@@ -59,6 +60,7 @@ spec:
       {{- end }}
       # Required by iSCSI
       hostNetwork: {{ .Values.node.hostNetwork }}
+      dnsPolicy: {{ .Values.node.dnsPolicy }}
       hostAliases: {{ .Values.node.hostAliases }}
       # Required by multipath detach
       hostIPC: {{ .Values.node.hostIPC }}
@@ -87,9 +89,9 @@ spec:
 
       {{- if .Values.node.driver.enabled }}
       - name: csi-driver
-        image: {{ .Values.node.driver.image }}
-        {{- if .Values.node.driver.imagePullPolicy }}
-        imagePullPolicy: {{ .Values.node.driver.imagePullPolicy }}
+        image: "{{ .Values.node.driver.image.registry }}:{{ .Values.node.driver.image.tag }}"
+        {{- if .Values.node.driver.image.pullPolicy }}
+        imagePullPolicy: {{ .Values.node.driver.image.pullPolicy }}
         {{- end }}
         {{- if .Values.node.driver.lifecycle }}
         lifecycle:
@@ -169,6 +171,11 @@ spec:
           mountPath: /var/lib/iscsi
           mountPropagation: Bidirectional
         {{- end }}
+        {{- if $mountNvme }}
+        - name: nvme-dir
+          mountPath: /etc/nvme
+          mountPropagation: Bidirectional
+        {{- end }}
         - name: modules-dir
           mountPath: /lib/modules
           readOnly: true
@@ -202,7 +209,7 @@ spec:
 
       {{- if .Values.node.driverRegistrar.enabled }}
       - name: driver-registrar
-        image: {{ .Values.node.driverRegistrar.image }}
+        image: "{{ .Values.node.driverRegistrar.image.registry }}:{{ .Values.node.driverRegistrar.image.tag }}"
         args:
         {{- range .Values.node.driverRegistrar.args }}
         - {{ tpl . $root }}
@@ -237,7 +244,7 @@ spec:
           mountPath: {{ .Values.node.kubeletHostPath }}
 
       - name: cleanup
-        image: {{ .Values.node.cleanup.image }}
+        image: "{{ .Values.node.cleanup.image.registry }}:{{ .Values.node.cleanup.image.tag }}"
         command:
           - "/bin/sh"
           - "-c"
@@ -285,6 +292,12 @@ spec:
       - name: iscsi-info
         hostPath:
           path: /var/lib/iscsi
+      {{- end }}
+      {{- if $mountNvme }}
+      - name: nvme-dir
+        hostPath:
+          path: {{ .Values.node.driver.nvmeDirHostPath }}
+          type: {{ .Values.node.driver.nvmeDirHostPathType }}
       {{- end }}
       - name: dev-dir
         hostPath:
