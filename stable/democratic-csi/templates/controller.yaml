@@ -58,6 +58,7 @@ spec:
       priorityClassName: "{{ .Values.controller.priorityClassName }}"
       {{- end }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
+      dnsPolicy: {{ .Values.controller.dnsPolicy }}
       hostAliases: {{ .Values.controller.hostAliases }}
       hostIPC: {{ .Values.controller.hostIPC }}
       containers:
@@ -82,11 +83,15 @@ spec:
 {{ include "democratic-csi.external-health-monitor-controller" (list $ . "0") | indent 6 }}
       {{- end }}
 
+{{- if .Values.controller.extraContainers }}
+{{ toYaml .Values.controller.extraContainers | indent 6 }}
+{{- end }}
+
       {{- if .Values.controller.driver.enabled }}
       - name: csi-driver
-        image: {{ .Values.controller.driver.image }}
-        {{- if .Values.controller.driver.imagePullPolicy }}
-        imagePullPolicy: {{ .Values.controller.driver.imagePullPolicy }}
+        image: "{{ .Values.controller.driver.image.registry }}:{{ .Values.controller.driver.image.tag }}"
+        {{- if .Values.controller.driver.image.pullPolicy }}
+        imagePullPolicy: {{ .Values.controller.driver.image.pullPolicy }}
         {{- end }}
         {{- if .Values.controller.driver.lifecycle }}
         lifecycle:
