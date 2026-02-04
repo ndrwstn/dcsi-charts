@@ -40,7 +40,7 @@ storageClasses:
     #          node-db.node.session.auth.username_in: "{{ .iscsi_username_in }}"
     #          node-db.node.session.auth.password_in: "{{ .iscsi_password_in }}"
     existingSecret:
-      nfs-chap-secret:
+      node-stage-secret: # this should be your chap secret
         name: existingSecretName
         namespace: existingSecretNameSpace
 
